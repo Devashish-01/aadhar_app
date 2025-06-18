@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-router.use('/', require('./registration/reg-routes'));
-router.use('/', require('./dashboard/dashboard-routes'));
+router.use('/dashboard', require('./dashboard/dashboard-routes'));
+router.use('/registration', require('./registration/reg-routes'));
+
 
 module.exports = router;

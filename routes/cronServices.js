@@ -3,6 +3,35 @@ const db = require('../db');
 const nodemailer = require('nodemailer');
 const config = require('../env.json');
 
+// Create a reusable transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: config.EMAIL_USER,
+    pass: config.EMAIL_PASS
+  }
+});
+
+// Function to send emails
+async function sendEmail(to, subject, text, html = null) {
+  try {
+    const mailOptions = {
+      from: config.EMAIL_USER,
+      to,
+      subject,
+      text,
+      html
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw error;
+  }
+}
+
 function SendBirthdayWishesForAadharUsers() {
   // At 9:00 AM every day
   cron.schedule('0 9 * * *', async () => {
@@ -16,21 +45,8 @@ function SendBirthdayWishesForAadharUsers() {
         return;
       }
 
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: config.EMAIL_USER,
-          pass: config.EMAIL_PASS
-        }
-      });
-
       for (const user of rows) {
-        await transporter.sendMail({
-          from: config.EMAIL_USER,
-          to: user.email_id,
-          subject: "🎂 Happy Birthday!",
-          text: `Dear ${user.first_name}, Happy Birthday from Team Aadhaar!`
-        });
+        await sendEmail(user.email_id, "🎂 Happy Birthday!", `Dear ${user.first_name}, Happy Birthday from Team Aadhaar!`);
       }
 
       console.log('Birthday emails sent.');
@@ -40,4 +56,7 @@ function SendBirthdayWishesForAadharUsers() {
   });
 }
 
-module.exports = { SendBirthdayWishesForAadharUsers };
+module.exports = { 
+  SendBirthdayWishesForAadharUsers,
+  sendEmail 
+};

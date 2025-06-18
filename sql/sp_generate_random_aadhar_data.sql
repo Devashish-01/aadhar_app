@@ -5,6 +5,8 @@ BEGIN
   DECLARE i INT DEFAULT 1;
   DECLARE max_city INT;
   DECLARE max_state INT;
+  DECLARE v_aadhar_number VARCHAR(12);
+  
   SELECT MAX(city_id) INTO max_city FROM city_master;
   SELECT MAX(state_id) INTO max_state FROM state_master;
 
@@ -20,12 +22,16 @@ BEGIN
     SET @sid = FLOOR(1 + RAND() * max_state);
     SET @pref = JSON_OBJECT('newsletter', IF(RAND() > 0.5, true, false), 'lang', ELT(FLOOR(RAND()*3)+1, 'en', 'hi', 'ta'));
 
-    -- INSERT INTO aadhar_users (first_name, last_name, dob, gender, mobile_number, email_id, address, aadhar_number, city_id, state_id, preferences)
-    call sp_create_aadhar_user(@fn, @ln, @dob, @gender, @mob, @email, @addr, '000000000000', @cid, @sid, @pref);
+    -- Call the stored procedure with OUT parameter
+    CALL sp_create_aadhar_user(
+      @fn, @ln, @dob, @gender, @mob, @email, @addr,
+      @cid, @sid, @pref, v_aadhar_number
+    );
 
-    SET @id = LAST_INSERT_ID();
-    UPDATE aadhar_users SET aadhar_number = LPAD(@id, 12, '0') WHERE tid = @id;
+    -- Get the generated Aadhaar number
+    SET @id = v_aadhar_number;
 
+    -- Add vaccination records
     IF RAND() < 0.8 THEN
       SET @d1 = DATE_ADD('2021-01-01', INTERVAL FLOOR(RAND()*730) DAY);
       IF RAND() < 0.6 THEN

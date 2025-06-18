@@ -116,3 +116,27 @@ exports.updateProfilePicture = async (req, res) => {
     }
   }
 };
+
+exports.generateRandomAadharData = async (req, res) => {
+  try {
+    const count = parseInt(req.body?.count); // no default
+
+    if (!count || isNaN(count) || count < 1 || count > 1000) {
+      return res.status(400).json({
+        error: "Invalid count. Please provide a number between 1 and 1000"
+      });
+    }
+
+
+    // Call the stored procedure
+    await db.query("CALL sp_generate_random_aadhar_data(?)", [count]);
+
+    res.json({ 
+      message: `Successfully generated ${count} random Aadhaar records`,
+      count: count
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
